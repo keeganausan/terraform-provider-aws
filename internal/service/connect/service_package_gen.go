@@ -120,6 +120,11 @@ func (p *servicePackage) SDKDataSources(ctx context.Context) []*types.ServicePac
 func (p *servicePackage) SDKResources(ctx context.Context) []*types.ServicePackageSDKResource {
 	return []*types.ServicePackageSDKResource{
 		{
+			Factory:  resourceAssociateQueueQuickConnects,
+			TypeName: "aws_connect_associate_queue_quick_connects",
+			Name:     "Associate Queue Quick Connects",
+		},
+		{
 			Factory:  resourceBotAssociation,
 			TypeName: "aws_connect_bot_association",
 			Name:     "Bot Association",
