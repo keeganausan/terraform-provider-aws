@@ -13,12 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
-		"github.com/hashicorp/terraform-provider-aws/internal/errs"
+	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/sdkdiag"
-	// "github.com/hashicorp/terraform-provider-aws/internal/flex"
-	// tfslices "github.com/hashicorp/terraform-provider-aws/internal/slices"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
-
 )
 
 const (
@@ -37,10 +34,6 @@ func resourceAssociateQueueQuickConnects() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
-			// "id": {
-			// 	Type:     schema.TypeString,
-			// 	Computed: true,
-			// },
 			"instance_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -83,10 +76,8 @@ func resourceAssociateQueueQuickConnectsCreate(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-
 	return append(diags, resourceAssociateQueueQuickConnectsRead(ctx, d, meta)...)
 }
-
 
 func resourceAssociateQueueQuickConnectsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
@@ -165,139 +156,6 @@ func findQueueQuickConnects(ctx context.Context, conn *connect.Client, input *co
 	return output.QuickConnectSummaryList, nil
 }
 
-
-
-
-
-
-
-
-
-
-
-	// parts, err := flex.ExpandResourceId(d.Id(), queueQuickConnectsResourceIDPartCount, true)
-	// if err != nil {
-	// 	return sdkdiag.AppendFromErr(diags, err)
-	// }
-
-	// instanceID, queueID := parts[0], parts[1]
-	// _, err = findQueueQuickConnectAssociationByKeys(ctx, conn, instanceID, queueID, func(v *awstypes.QuickConnectSummary))
-
-	// if !d.IsNewResource() && tfresource.NotFound(err) {
-	// 	log.Printf("[WARN] Connect Queue Quick Connect Association (%s) not found, removing from state", d.Id())
-	// 	d.SetId("")
-	// 	return diags
-	// }
-
-	// if err != nil {
-	// 	return sdkdiag.AppendErrorf(diags, "reading Connect Queue Quick Connects (%s): %s", d.Id(), err)
-	// }
-
-	// d.Set("instance_id", instanceID)
-	// d.Set("queue_id", queueID)
-
-
-	// instanceID := d.Get("instance_id").(string)
-	// queueID := d.Get("queue_id").(string)
-
-	// input := &connect.DescribeQueueInput{
-	// 	InstanceId: aws.String(instanceID),
-	// 	QueueId:    aws.String(queueID),
-	// }
-
-	// _, err := conn.DescribeQueue(ctx, input)
-	// if err != nil {
-	// 	return diag.FromErr(err)
-	// }
-
-
-
-// func findQueueQuickConnectAssociationByKeys(ctx context.Context, conn *connect.Client, instanceID string, queueID string, filter tfslices.Predicate[*awstypes.QuickConnectSummary]) (*string, error) {
-// 	var output []string
-// 	const maxResults = 100
-
-// 	input := &connect.ListQueueQuickConnectsInput{
-// 		InstanceId: aws.String(instanceID),
-// 		QueueId:    aws.String(queueID),
-// 		MaxResults: aws.Int32(maxResults),
-// 	}
-
-// 	pages := connect.NewListQueueQuickConnectsPaginator(conn, input)
-
-// 	for pages.HasMorePages() {
-// 		page, err := pages.NextPage(ctx)
-
-// 		if errs.IsA[*awstypes.ResourceNotFoundException](err) {
-// 			return nil, &retry.NotFoundError{
-// 				LastError:   err,
-// 				LastRequest: input,
-// 			}
-// 		}
-
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		for _, v := range page.QuickConnectSummaryList {
-// 			if filter(v) {
-// 				output = append(output, v)
-// 			}
-// 		}
-// 	}
-
-// 	return output, nil
-// }
-
-
-	// return findQueueQuickConnectAssociation(ctx, conn, input, func(v *awstypes.QuickConnectSummary) bool {
-	// 	return v == QuickConnectSummaryList
-	// })
-// }
-
-
-// 	return findQueueQuickConnect(ctx, conn, input, func(v *awstypes.QuickConnectConfig) bool {
-// 		// return v.QuickConnect. == queueID
-// 		return aws.ToString(v.QueueId) == queueID
-// 	})
-// }
-
-// func findQueueQuickConnect(ctx context.Context, conn *connect.Client, input *connect.ListQueueQuickConnectsInput, filter tfslices.Predicate[*awstypes.QueueQuickConnectConfig]) (*awstypes.QuickConnect, error) {
-// // func findQueueQuickConnect(ctx context.Context, conn *connect.Client, input *connect.ListQueueQuickConnectsInput, filter tfslices.Predicate[*awstypes.QueueQuickConnectConfig]) (*awstypes.QuickConnect, error) {
-// 	output, err := findQueueQuickConnects(ctx, conn, input, filter)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return tfresource.AssertSingleValueResult(output)
-// }
-
-// func findQueueQuickConnects(ctx context.Context, conn *connect.Client, input *connect.ListQueueQuickConnectsInput, filter tfslices.Predicate[*awstypes.QuickConnectConfig]) (*awstypes.QuickConnect, error) {
-// 	var output []string
-// 	pages := connect.NewListQueueQuickConnectsPaginator(conn, input)
-// 	for pages.HasMorePages() {
-// 		page, err := pages.NextPage(ctx)
-
-// 		if errs.IsA[*awstypes.ResourceNotFoundException](err) {
-// 			return nil, &retry.NotFoundError{
-// 				LastError:   err,
-// 				LastRequest: input,
-// 			}
-// 		}
-
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		for _, v := range page.QuickConnectSummaryList {
-// 			if filter(&v) {
-// 				output = append(output, v)
-// 			}
-// 		}
-// 	}
-
-// 	return output, nil
-// }
 
 func resourceAssociateQueueQuickConnectsDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
