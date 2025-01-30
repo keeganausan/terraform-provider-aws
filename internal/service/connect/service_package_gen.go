@@ -121,6 +121,11 @@ func (p *servicePackage) SDKDataSources(ctx context.Context) []*types.ServicePac
 func (p *servicePackage) SDKResources(ctx context.Context) []*types.ServicePackageSDKResource {
 	return []*types.ServicePackageSDKResource{
 		{
+			Factory:  resourceAssociateApprovedOrigin,
+			TypeName: "aws_connect_associate_approved_origin",
+			Name:     "Associate Approved Origins",
+		},
+		{
 			Factory:  resourceBotAssociation,
 			TypeName: "aws_connect_bot_association",
 			Name:     "Bot Association",
