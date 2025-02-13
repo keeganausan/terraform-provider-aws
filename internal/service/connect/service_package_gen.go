@@ -124,6 +124,16 @@ func (p *servicePackage) SDKResources(ctx context.Context) []*types.ServicePacka
 			Factory:  resourceAssociateApprovedOrigin,
 			TypeName: "aws_connect_associate_approved_origin",
 			Name:     "Associate Approved Origins",
+    },
+    {
+			Factory:  resourceAssociatePhoneNumberContactFlow,
+			TypeName: "aws_connect_associate_phone_number_contact_flow",
+			Name:     "Associate Phone Number Contact Flow",
+    },
+    {
+			Factory:  resourceAssociateQueueQuickConnects,
+			TypeName: "aws_connect_associate_queue_quick_connects",
+			Name:     "Associate Queue Quick Connects",
 		},
 		{
 			Factory:  resourceBotAssociation,
@@ -203,6 +213,11 @@ func (p *servicePackage) SDKResources(ctx context.Context) []*types.ServicePacka
 			Tags: &types.ServicePackageResourceTags{
 				IdentifierAttribute: names.AttrARN,
 			},
+		},
+		{
+			Factory:  resourceRule,
+			TypeName: "aws_connect_rule",
+			Name:     "Rule",
 		},
 		{
 			Factory:  resourceSecurityProfile,
