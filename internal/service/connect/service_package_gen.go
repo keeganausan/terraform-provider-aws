@@ -124,6 +124,11 @@ func (p *servicePackage) SDKResources(ctx context.Context) []*types.ServicePacka
 			Factory:  resourceAssociatePhoneNumberContactFlow,
 			TypeName: "aws_connect_associate_phone_number_contact_flow",
 			Name:     "Associate Phone Number Contact Flow",
+    },
+    {
+			Factory:  resourceAssociateQueueQuickConnects,
+			TypeName: "aws_connect_associate_queue_quick_connects",
+			Name:     "Associate Queue Quick Connects",
 		},
 		{
 			Factory:  resourceBotAssociation,
