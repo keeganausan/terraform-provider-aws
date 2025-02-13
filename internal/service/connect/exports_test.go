@@ -5,6 +5,7 @@ package connect
 
 // Exports for use in tests only.
 var (
+	ResourceAssociateQueueQuickConnects             = resourceAssociateQueueQuickConnects
 	ResourceBotAssociation            = resourceBotAssociation
 	ResourceContactFlow               = resourceContactFlow
 	ResourceContactFlowModule         = resourceContactFlowModule
