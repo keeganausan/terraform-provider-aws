@@ -49,15 +49,15 @@ func resourceRule() *schema.Resource {
 				Required: true,
 				ValidateDiagFunc: enum.Validate[awstypes.EventSourceName](),
 			},
-			"integration_association_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"action_type": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateDiagFunc: enum.Validate[awstypes.ActionType](),
-			},
+			// "integration_association_id": {
+			// 	Type:     schema.TypeString,
+			// 	Optional: true,
+			// },
+			// "action_type": {
+			// 	Type:     schema.TypeString,
+			// 	Required: true,
+			// 	ValidateDiagFunc: enum.Validate[awstypes.ActionType](),
+			// },
 			"publish_status": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -189,7 +189,7 @@ func resourceRule() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"contact_flow_arn": {
+									"contact_flow_id": {
 										Type:     schema.TypeString,
 										Required: true,
 									},
@@ -279,7 +279,6 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	conn := meta.(*conns.AWSClient).ConnectClient(ctx)
 	var diags diag.Diagnostics
 			// IntegrationAssociationId: aws.String(d.Get("trigger_event_source.0.integration_association_id").(string)),
-	actions := expandRuleActions(d.Get("actions").([]interface{}))
 
 	input := &connect.CreateRuleInput{
 		InstanceId: aws.String(d.Get("instance_id").(string)),
@@ -288,7 +287,7 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, meta interf
 			EventSourceName: awstypes.EventSourceName(d.Get("event_source_name").(string)),
 		},
 		Function: aws.String(d.Get("function").(string)),
-		Actions: actions,
+		Actions: expandRuleActions(d.Get("actions").([]interface{})),
 		PublishStatus: awstypes.RulePublishStatus(d.Get("publish_status").(string)),
 	}
 
@@ -336,19 +335,190 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, meta interfac
 		d.SetId("")
 		return nil
 	}
-
 	d.Set("name", output.Rule.Name)
 	d.Set("instance_id", instanceID)
-	// d.Set("event_source_name", flattenRuleTriggerEventSource(output.Rule.TriggerEventSource.EventSourceName))
 	d.Set("event_source_name", output.Rule.TriggerEventSource.EventSourceName)
 	d.Set("function", output.Rule.Function)
-	d.Set("actions", output.Rule.Actions)
-	// d.Set("action_type", flattenRuleActions(output.Rule.Actions.ActionType))
-	// d.Set("action_type", output.Rule.Actions[0].ActionType)
+	if err := d.Set("actions", flattenActions(output.Rule.Actions)); err != nil {
+		return diag.FromErr(err)
+	}
 	d.Set("publish_status", output.Rule.PublishStatus)
 
 	return diags
 }
+
+func flattenActions(actions []awstypes.RuleAction) []interface{} {
+	if actions == nil {
+		return []interface{}{}
+	}
+
+	// tfMap := map[string]interface{}{
+	// 	"actions": apiObject.StorageType,
+	// }
+
+	// var result []interface{}{}
+	tfMap := map[string]interface{}{}
+
+	for _, action := range actions {
+
+		switch action.ActionType {
+		case awstypes.ActionTypeAssignContactCategory:
+			tfMap["assign_contact_category_action"] = []interface{}{
+				map[string]interface{}{
+					"action_type": awstypes.ActionTypeAssignContactCategory,
+				},
+		  }
+
+		case awstypes.ActionTypeGenerateEventbridgeEvent:
+			tfMap["event_bridge_action"] = []interface{}{
+				map[string]interface{}{
+					"action_type": awstypes.ActionTypeGenerateEventbridgeEvent,
+					"name": aws.ToString(action.EventBridgeAction.Name),
+				},
+		  }
+
+		case awstypes.ActionTypeSendNotification:
+			tfMap["send_notification_action"] = []interface{}{
+				map[string]interface{}{
+					"action_type": awstypes.ActionTypeSendNotification,
+					"delivery_method": action.SendNotificationAction.DeliveryMethod,
+					"subject":         aws.ToString(action.SendNotificationAction.Subject),
+					"content":         aws.ToString(action.SendNotificationAction.Content),
+					"content_type":    action.SendNotificationAction.ContentType,
+					"recipient":       []interface{}{
+						map[string]interface{}{
+							"user_ids": action.SendNotificationAction.Recipient.UserIds,
+						},
+					},
+				},
+			}
+
+			// 	if action.SendNotificationAction.Recipient != nil {
+			// 		notificationAction["recipient"] = []interface{}{
+			// 			map[string]interface{}{
+			// 				"user_ids": action.SendNotificationAction.Recipient.UserIds,
+			// 			},
+			// 		}
+			// 	}
+			// }
+
+			// END SWITCH
+		}
+	}
+	return []interface{}{tfMap}
+}
+
+
+// function flattenRecipients(recipient []awstypes.NotificationRecipientType) []interface{} {
+// 	recipients := map[string]interface{}{}
+
+// 	recipients["user_ids"] = []interface{}{
+// 		map[string]interface{}{
+// 			"action_type": awstypes.ActionTypeGenerateEventbridgeEvent,
+// 		}
+
+// 	return []interface{}{recipients}
+// }
+
+	// return result
+
+
+	// tfMap["assign_contact_category_action"] = []interface{}{
+	// 	map[string]interface{}{
+	// 		"action_type": "ASSIGN_CONTACT_CATEGORY",
+	// 	},
+
+		// map[string]interface{}{
+		// 	"ActionType": "GENERATE_EVENTBRIDGE_EVENT",
+		// 	"EventBridgeAction": map[string]interface{}{
+		// 		"Name": "tfsample",
+		// 	},
+		// },
+
+
+
+		// case awstypes.ActionTypeGenerateEventbridgeEvent:
+		// 	actionMap["action_type"] = awstypes.ActionTypeGenerateEventbridgeEvent
+		// 			map[string]interface{}{
+		// 				"name": aws.ToString(action.EventBridgeAction.Name),
+		// 			}
+
+		// case awstypes.ActionTypeSendNotification:
+		// 	actionMap["action_type"] = awstypes.ActionTypeSendNotification
+		// 		notificationAction := map[string]interface{}{
+		// 			"delivery_method": action.SendNotificationAction.DeliveryMethod,
+		// 			"subject":         aws.ToString(action.SendNotificationAction.Subject),
+		// 			"content":         aws.ToString(action.SendNotificationAction.Content),
+		// 			"content_type":    action.SendNotificationAction.ContentType,
+		// 		}
+
+		// 		if action.SendNotificationAction.Recipient != nil {
+		// 			notificationAction["recipient"] = []interface{}{
+		// 				map[string]interface{}{
+		// 					"user_ids": action.SendNotificationAction.Recipient.UserIds,
+		// 				},
+		// 			}
+		// 		}
+		// 		actionMap["send_notification_action"] = []interface{}{notificationAction}
+
+	// case awstypes.ActionTypeCreateTask:
+	// 	actionMap["action_type"] = awstypes.ActionTypeCreateTask
+	// 	if action.TaskAction != nil {
+	// 		taskAction := map[string]interface{}{
+	// 			"name":           aws.ToString(action.TaskAction.Name),
+	// 			"description":    aws.ToString(action.TaskAction.Description),
+	// 			"contact_flow_id": aws.ToString(action.TaskAction.ContactFlowId),
+	// 			"reference":      flattenTaskReferences(action.TaskAction.References),
+	// 		}
+	// 	}
+	// 	actionMap["task_action"] = []interface{}{taskAction}
+
+	// case awstypes.ActionTypeCreateCase:
+	// 	actionMap["action_type"] = awstypes.ActionTypeCreateCase
+	// 	if action.CreateCaseAction != nil {
+	// 		createCaseAction := map[string]interface{}{
+	// 			"fields": flattenCaseFields(action.CreateCaseAction.Fields),
+	// 		}
+
+	// 	}
+
+
+func flattenTaskReferences(references map[string]awstypes.Reference) []interface{} {
+	var result []interface{}
+	for name, ref := range references {
+		result = append(result, map[string]interface{}{
+			"name":  name,
+			"value": ref.Value,
+			"type":  ref.Type,
+		})
+	}
+	return result
+}
+
+func flattenCaseFields(fields []awstypes.FieldValue) []interface{} {
+	var result []interface{}
+	for _, field := range fields {
+		result = append(result, map[string]interface{}{
+			"id":    field.Id,
+			"value": field.Value,
+		})
+	}
+	return result
+}
+
+// func flattenActions(actions *awstypes.RuleAction) []interface{} {
+// 	if actions == nil {
+// 		return []interface{}{}
+// 	}
+
+// 	actions := make([]awstypes.RuleAction, 0, len(actions))
+
+// 	tfMap := map[string]interface{}{
+// 		names.AttrStorageType: apiObject.StorageType,
+// 	}
+
+// }
+
 
 func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
@@ -364,11 +534,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 				// IntegrationAssociationId: aws.String(d.Get("trigger_event_source").([]interface{})[0].(map[string]interface{})["integration_association_id"].(string)),
 			// },
 			Function: aws.String(d.Get("function").(string)),
-			Actions: []awstypes.RuleAction{
-				{
-					ActionType: awstypes.ActionType(d.Get("action_type").(string)),
-				},
-			},
+			Actions: expandRuleActions(d.Get("actions").([]interface{})),
 			PublishStatus: awstypes.RulePublishStatus(d.Get("publish_status").(string)),
 		}
 
@@ -434,12 +600,50 @@ func expandRuleActions(tfList []interface{}) []awstypes.RuleAction {
 				Name: aws.String(v[0].(map[string]interface{})["name"].(string)),
 			},
 		}
+		actions = append(actions, action)
+	}
 
+	if v, ok := tfMap["send_notification_action"].([]interface{}); ok && len(v) > 0 {
+		action := awstypes.RuleAction{
+			ActionType: awstypes.ActionTypeSendNotification,
+			SendNotificationAction: &awstypes.SendNotificationActionDefinition{
+				DeliveryMethod: awstypes.NotificationDeliveryType(v[0].(map[string]interface{})["delivery_method"].(string)),
+				Subject:        aws.String(v[0].(map[string]interface{})["subject"].(string)),
+				Content:        aws.String(v[0].(map[string]interface{})["content"].(string)),
+				ContentType:    awstypes.NotificationContentType(v[0].(map[string]interface{})["content_type"].(string)),
+				Recipient: &awstypes.NotificationRecipientType{
+					UserIds: expandStringSet(v[0].(map[string]interface{})["recipient"].([]interface{})[0].(map[string]interface{})["user_ids"].(*schema.Set)),
+			}},
+		}
 		actions = append(actions, action)
 	}
 
 	return actions
 }
+
+func expandStringSet(s *schema.Set) []string {
+	if s == nil {
+		return nil
+	}
+	result := make([]string, 0, s.Len())
+	for _, v := range s.List() {
+		result = append(result, v.(string))
+	}
+	return result
+}
+
+
+			// if recipient, ok := notificationAction["recipient"].([]interface{}); ok && len(recipient) > 0 {
+				// recipientData := recipient[0].(map[string]interface{})
+				// action.SendNotificationAction.Recipient = &awstypes.NotificationRecipientType{
+					// UserIds: aws.String(recipientData.(map[string]interface{})["user_ids"].(string)),
+				// }
+			// }
+// 		actions = append(actions, action)
+// 	}
+
+// 	return actions
+// }
 
 
 
@@ -552,34 +756,34 @@ func expandRuleActions(tfList []interface{}) []awstypes.RuleAction {
 // 	return parameters
 // }
 
-func flattenRuleActions(actions []awstypes.RuleAction) []interface{} {
-	flattened := make([]interface{}, 0, len(actions))
+// func flattenRuleActions(actions []awstypes.RuleAction) []interface{} {
+// 	flattened := make([]interface{}, 0, len(actions))
 
-	for _, action := range actions {
-		data := map[string]interface{}{
-			"action_type": action.ActionType,
-		}
-		// for k, v := range action.Parameters {
-		// 	data[k] = v
-		// }
-		flattened = append(flattened, data)
-	}
+// 	for _, action := range actions {
+// 		data := map[string]interface{}{
+// 			"action_type": action.ActionType,
+// 		}
+// 		// for k, v := range action.Parameters {
+// 		// 	data[k] = v
+// 		// }
+// 		flattened = append(flattened, data)
+// 	}
 
-	return flattened
-}
+// 	return flattened
+// }
 
-func flattenRuleTriggerEventSource(triggerEventSource *awstypes.RuleTriggerEventSource) []interface{} {
-	if triggerEventSource == nil {
-		return nil
-	}
+// func flattenRuleTriggerEventSource(triggerEventSource *awstypes.RuleTriggerEventSource) []interface{} {
+// 	if triggerEventSource == nil {
+// 		return nil
+// 	}
 
-	return []interface{}{
-		map[string]interface{}{
-			"event_source_name":          triggerEventSource.EventSourceName,
-			"integration_association_id": aws.ToString(triggerEventSource.IntegrationAssociationId),
-		},
-	}
-}
+// 	return []interface{}{
+// 		map[string]interface{}{
+// 			"event_source_name":          triggerEventSource.EventSourceName,
+// 			"integration_association_id": aws.ToString(triggerEventSource.IntegrationAssociationId),
+// 		},
+// 	}
+// }
 
 func ruleCreateResourceID(instanceID, ruleID string) string {
 	parts := []string{instanceID, ruleID}
